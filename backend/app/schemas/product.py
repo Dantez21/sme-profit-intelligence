@@ -8,7 +8,9 @@ class ProductBase(BaseModel):
     name: str = Field(min_length=2, max_length=150)
     sku: str = Field(min_length=2, max_length=50)
     description: str | None = None
-    category: str = Field(min_length=2, max_length=100)
+
+    category_id: int = Field(gt=0)
+
     unit: str = Field(default="pcs", max_length=20)
 
     cost_price: Decimal = Field(gt=0, decimal_places=2)
@@ -22,11 +24,22 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=150)
     description: str | None = None
-    category: str | None = Field(default=None, min_length=2, max_length=100)
+
+    category_id: int | None = Field(default=None, gt=0)
+
     unit: str | None = Field(default=None, max_length=20)
 
-    cost_price: Decimal | None = Field(default=None, gt=0, decimal_places=2)
-    selling_price: Decimal | None = Field(default=None, gt=0, decimal_places=2)
+    cost_price: Decimal | None = Field(
+        default=None,
+        gt=0,
+        decimal_places=2,
+    )
+
+    selling_price: Decimal | None = Field(
+        default=None,
+        gt=0,
+        decimal_places=2,
+    )
 
 
 class ProductResponse(ProductBase):

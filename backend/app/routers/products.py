@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.category import Category
 from app.models.product import Product
 from app.schemas.product import (
     ProductCreate,
@@ -26,6 +27,16 @@ def create_product(
     product_data: ProductCreate,
     db: Session = Depends(get_db),
 ):
+    # Verify that the category exists.
+    category = db.get(Category, product_data.category_id)
+
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found.",
+        )
+
+    # Verify that the SKU is unique.
     existing_product = db.scalar(
         select(Product).where(Product.sku == product_data.sku)
     )
@@ -87,6 +98,16 @@ def update_product(
         )
 
     update_data = product_data.model_dump(exclude_unset=True)
+
+    # If the category is being changed, verify that the new category exists.
+    if "category_id" in update_data:
+        category = db.get(Category, update_data["category_id"])
+
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Category not found.",
+            )
 
     for field, value in update_data.items():
         setattr(product, field, value)

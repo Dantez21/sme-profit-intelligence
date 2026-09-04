@@ -1,3 +1,8 @@
+from app.schemas.category import (
+    CategoryCreate,
+    CategoryResponse,
+    CategoryUpdate,
+)
 from app.schemas.product import (
     ProductCreate,
     ProductResponse,
@@ -5,6 +10,9 @@ from app.schemas.product import (
 )
 
 __all__ = [
+    "CategoryCreate",
+    "CategoryResponse",
+    "CategoryUpdate",
     "ProductCreate",
     "ProductResponse",
     "ProductUpdate",
