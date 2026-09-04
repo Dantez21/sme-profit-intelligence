@@ -7,6 +7,7 @@ from app.routers.categories import router as category_router
 from app.routers.warehouses import router as warehouse_router
 from app.routers.customers import router as customer_router
 from app.routers.suppliers import router as supplier_router
+from app.routers.purchases import router as purchase_router
 from app.routers.stock_transactions import (
     router as stock_transaction_router,
 )
@@ -30,6 +31,7 @@ app.include_router(category_router)
 app.include_router(warehouse_router)
 app.include_router(customer_router)
 app.include_router(supplier_router)
+app.include_router(purchase_router)
 app.include_router(stock_transaction_router)
 
 
