@@ -36,6 +36,13 @@ from app.schemas.purchase import (
     PurchaseResponse,
     PurchaseStatus,
 )
+from app.schemas.sale import (
+    SaleCreate,
+    SaleItemCreate,
+    SaleItemResponse,
+    SaleResponse,
+    SaleStatus,
+)
 
 __all__ = [
     "CategoryCreate",
@@ -61,4 +68,9 @@ __all__ = [
     "PurchaseItemResponse",
     "PurchaseResponse",
     "PurchaseStatus",
+    "SaleCreate",
+    "SaleItemCreate",
+    "SaleItemResponse",
+    "SaleResponse",
+    "SaleStatus",
 ]

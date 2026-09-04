@@ -5,6 +5,7 @@ from app.models.stock_transaction import StockTransaction
 from app.models.customer import Customer
 from app.models.supplier import Supplier
 from app.models.purchase import Purchase, PurchaseItem
+from app.models.sale import Sale, SaleItem
 
 __all__ = [
     "Category",
@@ -15,4 +16,6 @@ __all__ = [
     "Warehouse",
     "Purchase",
     "PurchaseItem",
+    "Sale",
+    "SaleItem",
 ]
