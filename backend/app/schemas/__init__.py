@@ -43,6 +43,7 @@ from app.schemas.sale import (
     SaleResponse,
     SaleStatus,
 )
+from app.schemas.intelligence import ProfitSummaryResponse
 
 __all__ = [
     "CategoryCreate",
@@ -73,4 +74,5 @@ __all__ = [
     "SaleItemResponse",
     "SaleResponse",
     "SaleStatus",
+    "ProfitSummaryResponse",
 ]

@@ -35,6 +35,7 @@ def test_create_product(client):
     assert data["name"] == "Ribeye Steak"
     assert data["sku"] == "BEEF-RIBEYE-TEST-001"
     assert data["category_id"] == category_id
+    assert data["reorder_level"] == "0.000"
 
 
 def test_list_products(client):
@@ -215,6 +216,7 @@ def test_product_category_not_found(client):
     )
 
     assert response.status_code == 404
+
     assert response.json()["detail"] == "Category not found."
 
 
@@ -245,4 +247,6 @@ def test_update_product_category_not_found(client):
     )
 
     assert response.status_code == 404
+
     assert response.json()["detail"] == "Category not found."
+

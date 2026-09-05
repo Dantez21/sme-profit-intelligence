@@ -48,6 +48,7 @@ class SaleItemResponse(BaseModel):
     product_id: int
     quantity: Decimal
     unit_price: Decimal
+    unit_cost: Decimal
 
     model_config = ConfigDict(
         from_attributes=True,

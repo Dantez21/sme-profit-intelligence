@@ -96,12 +96,20 @@ def create_sale(
                 ),
             )
 
+        # sale.items.append(
+        #     SaleItem(
+        #         product_id=item_data.product_id,
+        #         quantity=item_data.quantity,
+        #         unit_price=item_data.unit_price,
+        #     )
+        # )
         sale.items.append(
-            SaleItem(
-                product_id=item_data.product_id,
-                quantity=item_data.quantity,
-                unit_price=item_data.unit_price,
-            )
+           SaleItem(
+              product_id=item_data.product_id,
+              quantity=item_data.quantity,
+              unit_price=item_data.unit_price,
+              unit_cost=product.cost_price,
+          )
         )
 
     db.add(sale)

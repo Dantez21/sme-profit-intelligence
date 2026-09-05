@@ -12,6 +12,7 @@ from app.routers.sales import router as sale_router
 from app.routers.stock_transactions import (
     router as stock_transaction_router,
 )
+from app.routers.intelligence import router as intelligence_router
 
 
 # Base.metadata.create_all(bind=engine)
@@ -35,6 +36,7 @@ app.include_router(supplier_router)
 app.include_router(purchase_router)
 app.include_router(sale_router)
 app.include_router(stock_transaction_router)
+app.include_router(intelligence_router)
 
 
 @app.get("/")

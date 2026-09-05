@@ -16,6 +16,12 @@ class ProductBase(BaseModel):
     cost_price: Decimal = Field(gt=0, decimal_places=2)
     selling_price: Decimal = Field(gt=0, decimal_places=2)
 
+    reorder_level: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        decimal_places=3,
+    )
+
 
 class ProductCreate(ProductBase):
     pass
@@ -39,6 +45,12 @@ class ProductUpdate(BaseModel):
         default=None,
         gt=0,
         decimal_places=2,
+    )
+
+    reorder_level: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=3,
     )
 
 

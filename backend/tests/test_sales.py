@@ -137,6 +137,7 @@ def test_create_sale_as_draft(client):
     assert data["items"][0]["product_id"] == product_id
     assert data["items"][0]["quantity"] == "10.000"
     assert data["items"][0]["unit_price"] == "1250.00"
+    assert data["items"][0]["unit_cost"] == "850.00"
 
 
 def test_draft_sale_does_not_change_stock(client):

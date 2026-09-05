@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, func
@@ -54,6 +55,13 @@ class Product(Base):
     selling_price: Mapped[float] = mapped_column(
         Numeric(12, 2),
         nullable=False,
+    )
+
+    reorder_level: Mapped[Decimal] = mapped_column(
+        Numeric(12, 3),
+        nullable=False,
+        default=Decimal("0"),
+        server_default="0",
     )
 
     created_at: Mapped[datetime] = mapped_column(

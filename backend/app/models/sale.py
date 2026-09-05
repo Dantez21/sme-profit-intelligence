@@ -104,6 +104,10 @@ class SaleItem(Base):
         Numeric(12, 2),
         nullable=False,
     )
+    unit_cost: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2),
+        nullable=False,
+    )
 
     sale = relationship(
         "Sale",
