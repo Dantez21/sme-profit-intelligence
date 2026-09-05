@@ -358,14 +358,24 @@ def test_product_profitability_ranks_by_revenue(client):
     assert Decimal(data[0]["revenue"]) == Decimal("25000.00")
     assert Decimal(data[0]["cogs"]) == Decimal("17000.00")
     assert Decimal(data[0]["gross_profit"]) == Decimal("8000.00")
-    assert Decimal(data[0]["gross_margin"]).quantize(Decimal("0.01")) == Decimal("32.00")
+    assert (
+        Decimal(data[0]["gross_margin"]).quantize(
+            Decimal("0.01")
+        )
+        == Decimal("32.00")
+    )
 
     assert data[1]["product_id"] == second_product_id
     assert Decimal(data[1]["quantity_sold"]) == Decimal("10.000")
     assert Decimal(data[1]["revenue"]) == Decimal("12000.00")
     assert Decimal(data[1]["cogs"]) == Decimal("8000.00")
     assert Decimal(data[1]["gross_profit"]) == Decimal("4000.00")
-    assert Decimal(data[1]["gross_margin"]).quantize(Decimal("0.01")) == Decimal("33.33")
+    assert (
+        Decimal(data[1]["gross_margin"]).quantize(
+            Decimal("0.01")
+        )
+        == Decimal("33.33")
+    )
 
 
 def test_product_profitability_excludes_draft_sales(client):
@@ -397,3 +407,254 @@ def test_product_profitability_excludes_draft_sales(client):
     data = response.json()
 
     assert data == []
+
+
+def test_inventory_intelligence_reports_stock_value_and_low_stock(
+    client,
+):
+    category_response = client.post(
+        "/api/v1/categories",
+        json={
+            "name": "Inventory Test Category",
+            "description": "Category for inventory intelligence tests",
+        },
+    )
+
+    assert category_response.status_code == 201
+
+    category_id = category_response.json()["id"]
+
+    product_response = client.post(
+        "/api/v1/products",
+        json={
+            "name": "Inventory Test Product",
+            "sku": "INV-TEST-001",
+            "description": "Product for inventory intelligence tests",
+            "category_id": category_id,
+            "unit": "pcs",
+            "cost_price": 500.00,
+            "selling_price": 800.00,
+            "reorder_level": 10.000,
+        },
+    )
+
+    assert product_response.status_code == 201
+
+    product_id = product_response.json()["id"]
+
+    warehouse_response = client.post(
+        "/api/v1/warehouses",
+        json={
+            "name": "Inventory Test Warehouse",
+            "code": "INV-WH-001",
+            "description": "Warehouse for inventory intelligence tests",
+        },
+    )
+
+    assert warehouse_response.status_code == 201
+
+    warehouse_id = warehouse_response.json()["id"]
+
+    stock_response = client.post(
+        "/api/v1/stock-transactions",
+        json={
+            "product_id": product_id,
+            "warehouse_id": warehouse_id,
+            "transaction_type": "opening",
+            "quantity": 7.000,
+            "reference": "OPENING-INV-001",
+            "notes": "Opening inventory",
+        },
+    )
+
+    assert stock_response.status_code == 201
+
+    response = client.get(
+        "/api/v1/intelligence/inventory"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_stock_value"] == "3500.00"
+    assert data["low_stock_products"] == 1
+    assert len(data["products"]) == 1
+
+    product = data["products"][0]
+
+    assert product["product_id"] == product_id
+    assert product["product_name"] == "Inventory Test Product"
+    assert product["sku"] == "INV-TEST-001"
+    assert product["warehouse_id"] == warehouse_id
+    assert product["warehouse_name"] == "Inventory Test Warehouse"
+    assert product["current_stock"] == "7.000"
+    assert product["reorder_level"] == "10.000"
+    assert product["stock_value"] == "3500.00"
+    assert product["low_stock"] is True
+
+
+def test_inventory_intelligence_marks_product_as_not_low_stock_when_above_reorder_level(
+    client,
+):
+    category_response = client.post(
+        "/api/v1/categories",
+        json={
+            "name": "Inventory Healthy Category",
+            "description": "Category for inventory intelligence tests",
+        },
+    )
+
+    assert category_response.status_code == 201
+
+    category_id = category_response.json()["id"]
+
+    product_response = client.post(
+        "/api/v1/products",
+        json={
+            "name": "Healthy Stock Product",
+            "sku": "INV-TEST-002",
+            "description": "Product above reorder level",
+            "category_id": category_id,
+            "unit": "pcs",
+            "cost_price": 250.00,
+            "selling_price": 400.00,
+            "reorder_level": 10.000,
+        },
+    )
+
+    assert product_response.status_code == 201
+
+    product_id = product_response.json()["id"]
+
+    warehouse_response = client.post(
+        "/api/v1/warehouses",
+        json={
+            "name": "Healthy Stock Warehouse",
+            "code": "INV-WH-002",
+            "description": "Warehouse for healthy inventory tests",
+        },
+    )
+
+    assert warehouse_response.status_code == 201
+
+    warehouse_id = warehouse_response.json()["id"]
+
+    stock_response = client.post(
+        "/api/v1/stock-transactions",
+        json={
+            "product_id": product_id,
+            "warehouse_id": warehouse_id,
+            "transaction_type": "opening",
+            "quantity": 25.000,
+            "reference": "OPENING-INV-002",
+            "notes": "Opening inventory",
+        },
+    )
+
+    assert stock_response.status_code == 201
+
+    response = client.get(
+        "/api/v1/intelligence/inventory"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total_stock_value"] == "6250.00"
+    assert data["low_stock_products"] == 0
+
+    product = data["products"][0]
+
+    assert product["current_stock"] == "25.000"
+    assert product["reorder_level"] == "10.000"
+    assert product["stock_value"] == "6250.00"
+    assert product["low_stock"] is False
+
+
+def test_inventory_intelligence_aggregates_multiple_stock_transactions(
+    client,
+):
+    category_response = client.post(
+        "/api/v1/categories",
+        json={
+            "name": "Inventory Aggregate Category",
+            "description": "Category for stock aggregation tests",
+        },
+    )
+
+    assert category_response.status_code == 201
+
+    category_id = category_response.json()["id"]
+
+    product_response = client.post(
+        "/api/v1/products",
+        json={
+            "name": "Aggregated Stock Product",
+            "sku": "INV-TEST-003",
+            "description": "Product for stock aggregation",
+            "category_id": category_id,
+            "unit": "pcs",
+            "cost_price": 100.00,
+            "selling_price": 180.00,
+            "reorder_level": 5.000,
+        },
+    )
+
+    assert product_response.status_code == 201
+
+    product_id = product_response.json()["id"]
+
+    warehouse_response = client.post(
+        "/api/v1/warehouses",
+        json={
+            "name": "Aggregate Warehouse",
+            "code": "INV-WH-003",
+            "description": "Warehouse for stock aggregation tests",
+        },
+    )
+
+    assert warehouse_response.status_code == 201
+
+    warehouse_id = warehouse_response.json()["id"]
+
+    opening_response = client.post(
+        "/api/v1/stock-transactions",
+        json={
+            "product_id": product_id,
+            "warehouse_id": warehouse_id,
+            "transaction_type": "opening",
+            "quantity": 20.000,
+            "reference": "OPENING-INV-003",
+        },
+    )
+
+    assert opening_response.status_code == 201
+
+    sale_response = client.post(
+        "/api/v1/stock-transactions",
+        json={
+            "product_id": product_id,
+            "warehouse_id": warehouse_id,
+            "transaction_type": "sale",
+            "quantity": 6.000,
+            "reference": "SALE-INV-003",
+        },
+    )
+
+    assert sale_response.status_code == 201
+
+    response = client.get(
+        "/api/v1/intelligence/inventory"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    product = data["products"][0]
+
+    assert product["current_stock"] == "14.000"
+    assert product["stock_value"] == "1400.00"
+    assert product["low_stock"] is False
