@@ -10,6 +10,7 @@ import {
   Truck,
   Users,
   Warehouse,
+  X,
 } from "lucide-react";
 import { NavLink } from "react-router";
 
@@ -77,120 +78,194 @@ const settingsNavigation = [
   },
 ];
 
+interface SidebarProps {
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+}
+
 function NavigationItem({
   label,
   path,
   icon: Icon,
+  onNavigate,
 }: {
   label: string;
   path: string;
   icon: typeof LayoutDashboard;
+  onNavigate?: () => void;
 }) {
   return (
     <NavLink
       to={path}
+      onClick={onNavigate}
       className={({ isActive }) =>
         [
           "flex w-full items-center gap-3 rounded-lg px-3 py-2.5",
           "text-left text-sm font-medium transition-colors",
+          "outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
           isActive
-            ? "bg-slate-900 text-white"
+            ? "bg-slate-900 !text-white"
             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
         ].join(" ")
       }
     >
-      <Icon className="h-4.5 w-4.5 shrink-0" />
-      <span>{label}</span>
+      <Icon className="h-4.5 w-4.5 shrink-0 text-current" />
+      <span className="text-current">{label}</span>
     </NavLink>
   );
 }
 
-function Sidebar() {
+function Sidebar({
+  mobileOpen,
+  onCloseMobile,
+}: SidebarProps) {
+  const navigationContent = (
+    <nav className="flex-1 overflow-y-auto px-3 py-5">
+      <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        Workspace
+      </p>
+
+      <div className="mt-2 space-y-1">
+        {navigation.map((item) => (
+          <NavigationItem
+            key={item.label}
+            label={item.label}
+            path={item.path}
+            icon={item.icon}
+            onNavigate={onCloseMobile}
+          />
+        ))}
+      </div>
+
+      <p className="mt-8 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        Intelligence
+      </p>
+
+      <div className="mt-2 space-y-1">
+        {intelligenceNavigation.map((item) => (
+          <NavigationItem
+            key={item.label}
+            label={item.label}
+            path={item.path}
+            icon={item.icon}
+            onNavigate={onCloseMobile}
+          />
+        ))}
+      </div>
+
+      <p className="mt-8 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        System
+      </p>
+
+      <div className="mt-2 space-y-1">
+        {settingsNavigation.map((item) => (
+          <NavigationItem
+            key={item.label}
+            label={item.label}
+            path={item.path}
+            icon={item.icon}
+            onNavigate={onCloseMobile}
+          />
+        ))}
+      </div>
+    </nav>
+  );
+
+  const userSection = (
+    <div className="border-t border-slate-200 p-4">
+      <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+          DW
+        </div>
+
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-slate-900">
+            Administrator
+          </p>
+
+          <p className="truncate text-xs text-slate-500">
+            Business Owner
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <aside className="hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
-      <div className="flex h-16 items-center border-b border-slate-200 px-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white">
-            SI
+    <>
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={onCloseMobile}
+          className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden"
+        />
+      )}
+
+      <aside
+        className={[
+          "fixed inset-y-0 left-0 z-50 flex w-72",
+          "flex-col border-r border-slate-200 bg-white",
+          "transition-transform duration-200 lg:hidden",
+          mobileOpen
+            ? "translate-x-0"
+            : "-translate-x-full",
+        ].join(" ")}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white">
+              SI
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                  BizNuru
+                </p>
+
+                <p className="text-xs text-slate-500">
+                  Business Intelligence. Made Simple.
+                </p>
+            </div>
           </div>
 
-          <div>
-            <p className="text-sm font-semibold text-slate-900">
-              SME Intelligence
-            </p>
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            aria-label="Close navigation"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-            <p className="text-xs text-slate-500">
-              Business Platform
-            </p>
+        {navigationContent}
+        {userSection}
+      </aside>
+
+      <aside className="hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+        <div className="flex h-16 items-center border-b border-slate-200 px-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white">
+              SI
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                SME Intelligence
+              </p>
+
+              <p className="text-xs text-slate-500">
+                Business Platform
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-5">
-        <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Workspace
-        </p>
-
-        <div className="mt-2 space-y-1">
-          {navigation.map((item) => (
-            <NavigationItem
-              key={item.label}
-              label={item.label}
-              path={item.path}
-              icon={item.icon}
-            />
-          ))}
-        </div>
-
-        <p className="mt-8 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Intelligence
-        </p>
-
-        <div className="mt-2 space-y-1">
-          {intelligenceNavigation.map((item) => (
-            <NavigationItem
-              key={item.label}
-              label={item.label}
-              path={item.path}
-              icon={item.icon}
-            />
-          ))}
-        </div>
-
-        <p className="mt-8 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          System
-        </p>
-
-        <div className="mt-2 space-y-1">
-          {settingsNavigation.map((item) => (
-            <NavigationItem
-              key={item.label}
-              label={item.label}
-              path={item.path}
-              icon={item.icon}
-            />
-          ))}
-        </div>
-      </nav>
-
-      <div className="border-t border-slate-200 p-4">
-        <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
-            DW
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-slate-900">
-              Administrator
-            </p>
-
-            <p className="truncate text-xs text-slate-500">
-              Business Owner
-            </p>
-          </div>
-        </div>
-      </div>
-    </aside>
+        {navigationContent}
+        {userSection}
+      </aside>
+    </>
   );
 }
 

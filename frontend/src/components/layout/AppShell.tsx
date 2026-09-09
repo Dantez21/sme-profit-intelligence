@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+import {
+  useState,
+  type ReactNode,
+} from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
@@ -7,13 +10,25 @@ interface AppShellProps {
 }
 
 function AppShell({ children }: AppShellProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] =
+    useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="flex min-h-screen">
-        <Sidebar />
+        <Sidebar
+          mobileOpen={mobileSidebarOpen}
+          onCloseMobile={() =>
+            setMobileSidebarOpen(false)
+          }
+        />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar />
+          <Topbar
+            onMenuClick={() =>
+              setMobileSidebarOpen(true)
+            }
+          />
 
           <main className="flex-1 overflow-y-auto">
             {children}
