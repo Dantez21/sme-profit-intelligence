@@ -658,3 +658,80 @@ def test_inventory_intelligence_aggregates_multiple_stock_transactions(
     assert product["current_stock"] == "14.000"
     assert product["stock_value"] == "1400.00"
     assert product["low_stock"] is False
+
+def test_revenue_trend_includes_submitted_sales(client):
+    product_id = create_product(
+        client,
+        sku="TREND-001",
+        cost_price=500.00,
+        selling_price=800.00,
+    )
+
+    customer_id = create_customer(client)
+    warehouse_id = create_warehouse(client)
+
+    create_stock(
+        client,
+        product_id,
+        warehouse_id,
+        50,
+    )
+
+    sale_id = create_sale(
+        client,
+        customer_id,
+        warehouse_id,
+        product_id,
+        quantity=5,
+        unit_price=800.00,
+    )
+
+    submit_sale(client, sale_id)
+
+    response = client.get(
+        "/api/v1/intelligence/revenue-trend"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+
+    row = data[0]
+
+    assert row["period"]
+    assert Decimal(row["revenue"]) == Decimal("4000.00")
+    assert Decimal(row["cogs"]) == Decimal("2500.00")
+    assert Decimal(row["gross_profit"]) == Decimal("1500.00")
+
+
+def test_revenue_trend_excludes_draft_sales(client):
+    product_id = create_product(
+        client,
+        sku="TREND-002",
+        cost_price=400.00,
+        selling_price=700.00,
+    )
+
+    customer_id = create_customer(client)
+    warehouse_id = create_warehouse(client)
+
+    create_sale(
+        client,
+        customer_id,
+        warehouse_id,
+        product_id,
+        quantity=5,
+        unit_price=700.00,
+    )
+
+    response = client.get(
+        "/api/v1/intelligence/revenue-trend"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data == []

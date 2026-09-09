@@ -35,3 +35,10 @@ class InventoryIntelligenceResponse(BaseModel):
     total_stock_value: Decimal
     low_stock_products: int
     products: list[InventoryProductResponse]
+
+
+class RevenueTrendResponse(BaseModel):
+    period: str
+    revenue: Decimal
+    cogs: Decimal
+    gross_profit: Decimal

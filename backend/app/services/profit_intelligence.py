@@ -201,3 +201,82 @@ def get_inventory_intelligence(db: Session) -> dict:
         "low_stock_products": low_stock_count,
         "products": products,
     }
+
+def get_revenue_trend(db: Session) -> list[dict]:
+    year_expression = func.extract(
+        "year",
+        Sale.sale_date,
+    )
+
+    month_expression = func.extract(
+        "month",
+        Sale.sale_date,
+    )
+
+    results = db.execute(
+        select(
+            year_expression.label("year"),
+            month_expression.label("month"),
+            func.coalesce(
+                func.sum(
+                    SaleItem.quantity
+                    * SaleItem.unit_price
+                ),
+                0,
+            ).label("revenue"),
+            func.coalesce(
+                func.sum(
+                    SaleItem.quantity
+                    * SaleItem.unit_cost
+                ),
+                0,
+            ).label("cogs"),
+        )
+        .join(
+            Sale,
+            SaleItem.sale_id == Sale.id,
+        )
+        .where(
+            Sale.status == "submitted",
+        )
+        .group_by(
+            year_expression,
+            month_expression,
+        )
+        .order_by(
+            year_expression,
+            month_expression,
+        )
+    ).all()
+
+    trend = []
+
+    for row in results:
+        revenue = Decimal(row.revenue)
+        cogs = Decimal(row.cogs)
+        gross_profit = revenue - cogs
+
+        period = (
+            f"{int(row.year):04d}-"
+            f"{int(row.month):02d}"
+        )
+
+        trend.append(
+            {
+                "period": period,
+                "revenue": revenue.quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP,
+                ),
+                "cogs": cogs.quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP,
+                ),
+                "gross_profit": gross_profit.quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP,
+                ),
+            }
+        )
+
+    return trend

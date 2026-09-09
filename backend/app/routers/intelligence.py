@@ -6,11 +6,13 @@ from app.schemas.intelligence import (
     InventoryIntelligenceResponse,
     ProductProfitabilityResponse,
     ProfitSummaryResponse,
+    RevenueTrendResponse,
 )
 from app.services.profit_intelligence import (
     get_inventory_intelligence,
     get_product_profitability,
     get_profit_summary,
+    get_revenue_trend,
 )
 
 
@@ -48,3 +50,13 @@ def inventory_intelligence(
     db: Session = Depends(get_db),
 ):
     return get_inventory_intelligence(db)
+
+
+@router.get(
+    "/revenue-trend",
+    response_model=list[RevenueTrendResponse],
+)
+def revenue_trend(
+    db: Session = Depends(get_db),
+):
+    return get_revenue_trend(db)
