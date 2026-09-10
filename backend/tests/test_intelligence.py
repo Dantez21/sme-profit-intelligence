@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime, timezone
 
 
 def create_category(client, name="Beef Cuts"):
@@ -354,6 +355,8 @@ def test_product_profitability_ranks_by_revenue(client):
     assert len(data) == 2
 
     assert data[0]["product_id"] == first_product_id
+    assert data[0]["product_name"] == "Ribeye Steak"
+    assert data[0]["sku"] == "PROFIT-001"
     assert Decimal(data[0]["quantity_sold"]) == Decimal("20.000")
     assert Decimal(data[0]["revenue"]) == Decimal("25000.00")
     assert Decimal(data[0]["cogs"]) == Decimal("17000.00")
@@ -366,6 +369,8 @@ def test_product_profitability_ranks_by_revenue(client):
     )
 
     assert data[1]["product_id"] == second_product_id
+    assert data[1]["product_name"] == "Sirloin Steak"
+    assert data[1]["sku"] == "PROFIT-002"
     assert Decimal(data[1]["quantity_sold"]) == Decimal("10.000")
     assert Decimal(data[1]["revenue"]) == Decimal("12000.00")
     assert Decimal(data[1]["cogs"]) == Decimal("8000.00")
@@ -735,3 +740,170 @@ def test_revenue_trend_excludes_draft_sales(client):
     data = response.json()
 
     assert data == []
+
+def test_profit_summary_respects_date_range(
+    client,
+    db_session,
+):
+    product_id = create_product(
+        client,
+        sku="DATE-001",
+        cost_price=500.00,
+        selling_price=800.00,
+    )
+
+    customer_id = create_customer(client)
+    warehouse_id = create_warehouse(client)
+
+    create_stock(
+        client,
+        product_id,
+        warehouse_id,
+        100,
+    )
+
+    first_sale = create_sale(
+        client,
+        customer_id,
+        warehouse_id,
+        product_id,
+        quantity=10,
+        unit_price=800.00,
+    )
+
+    second_sale = create_sale(
+        client,
+        customer_id,
+        warehouse_id,
+        product_id,
+        quantity=5,
+        unit_price=800.00,
+    )
+
+    submit_sale(client, first_sale)
+    submit_sale(client, second_sale)
+
+    from app.models.sale import Sale
+
+    sales = (
+        db_session.query(Sale)
+        .order_by(Sale.id)
+        .all()
+    )
+
+    sales[0].sale_date = datetime(
+        2025,
+        1,
+        10,
+        tzinfo=timezone.utc,
+    )
+
+    sales[1].sale_date = datetime(
+        2025,
+        2,
+        10,
+        tzinfo=timezone.utc,
+    )
+
+    db_session.commit()
+
+    response = client.get(
+        "/api/v1/intelligence/profit-summary",
+        params={
+            "start_date": "2025-02-01",
+            "end_date": "2025-02-28",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert Decimal(data["revenue"]) == Decimal("4000.00")
+    assert Decimal(data["cogs"]) == Decimal("2500.00")
+    assert Decimal(data["gross_profit"]) == Decimal("1500.00")
+
+def test_revenue_trend_respects_date_range(
+    client,
+    db_session,
+):
+    product_id = create_product(
+        client,
+        sku="DATE-002",
+        cost_price=500.00,
+        selling_price=800.00,
+    )
+
+    customer_id = create_customer(client)
+    warehouse_id = create_warehouse(client)
+
+    create_stock(
+        client,
+        product_id,
+        warehouse_id,
+        100,
+    )
+
+    first_sale = create_sale(
+        client,
+        customer_id,
+        warehouse_id,
+        product_id,
+        quantity=10,
+        unit_price=800.00,
+    )
+
+    second_sale = create_sale(
+        client,
+        customer_id,
+        warehouse_id,
+        product_id,
+        quantity=5,
+        unit_price=800.00,
+    )
+
+    submit_sale(client, first_sale)
+    submit_sale(client, second_sale)
+
+    from app.models.sale import Sale
+
+    sales = (
+        db_session.query(Sale)
+        .order_by(Sale.id)
+        .all()
+    )
+
+    sales[0].sale_date = datetime(
+        2025,
+        1,
+        10,
+        tzinfo=timezone.utc,
+    )
+
+    sales[1].sale_date = datetime(
+        2025,
+        2,
+        10,
+        tzinfo=timezone.utc,
+    )
+
+    db_session.commit()
+
+    response = client.get(
+        "/api/v1/intelligence/revenue-trend",
+        params={
+            "start_date": "2025-02-01",
+            "end_date": "2025-02-28",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["period"] == "2025-02"
+    assert Decimal(data[0]["revenue"]) == Decimal("4000.00")
+    assert Decimal(data[0]["cogs"]) == Decimal("2500.00")
+    assert Decimal(data[0]["gross_profit"]) == Decimal("1500.00")
+

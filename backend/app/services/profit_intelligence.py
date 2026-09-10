@@ -1,3 +1,4 @@
+from datetime import date, datetime, time, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy import func, select
@@ -9,8 +10,40 @@ from app.models.stock_transaction import StockTransaction
 from app.models.warehouse import Warehouse
 
 
-def get_profit_summary(db: Session) -> dict:
-    revenue = db.scalar(
+def apply_sale_date_filter(
+    query,
+    start_date: date | None = None,
+    end_date: date | None = None,
+):
+    if start_date is not None:
+        start_datetime = datetime.combine(
+            start_date,
+            time.min,
+            tzinfo=timezone.utc,
+        )
+        query = query.where(
+            Sale.sale_date >= start_datetime,
+        )
+
+    if end_date is not None:
+        end_datetime = datetime.combine(
+            end_date,
+            time.max,
+            tzinfo=timezone.utc,
+        )
+        query = query.where(
+            Sale.sale_date <= end_datetime,
+        )
+
+    return query
+
+
+def get_profit_summary(
+    db: Session,
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> dict:
+    revenue_query = (
         select(
             func.coalesce(
                 func.sum(
@@ -23,7 +56,15 @@ def get_profit_summary(db: Session) -> dict:
         .where(Sale.status == "submitted")
     )
 
-    cogs = db.scalar(
+    revenue_query = apply_sale_date_filter(
+        revenue_query,
+        start_date,
+        end_date,
+    )
+
+    revenue = db.scalar(revenue_query)
+
+    cogs_query = (
         select(
             func.coalesce(
                 func.sum(
@@ -35,6 +76,14 @@ def get_profit_summary(db: Session) -> dict:
         .join(Sale, SaleItem.sale_id == Sale.id)
         .where(Sale.status == "submitted")
     )
+
+    cogs_query = apply_sale_date_filter(
+        cogs_query,
+        start_date,
+        end_date,
+    )
+
+    cogs = db.scalar(cogs_query)
 
     revenue = Decimal(revenue)
     cogs = Decimal(cogs)
@@ -59,7 +108,9 @@ def get_profit_summary(db: Session) -> dict:
 def get_product_profitability(db: Session) -> list[dict]:
     results = db.execute(
         select(
-            SaleItem.product_id,
+            Product.id.label("product_id"),
+            Product.name.label("product_name"),
+            Product.sku.label("sku"),
             func.sum(SaleItem.quantity).label("quantity_sold"),
             func.sum(
                 SaleItem.quantity * SaleItem.unit_price
@@ -68,9 +119,22 @@ def get_product_profitability(db: Session) -> list[dict]:
                 SaleItem.quantity * SaleItem.unit_cost
             ).label("cogs"),
         )
-        .join(Sale, SaleItem.sale_id == Sale.id)
-        .where(Sale.status == "submitted")
-        .group_by(SaleItem.product_id)
+        .join(
+            Sale,
+            SaleItem.sale_id == Sale.id,
+        )
+        .join(
+            Product,
+            SaleItem.product_id == Product.id,
+        )
+        .where(
+            Sale.status == "submitted",
+        )
+        .group_by(
+            Product.id,
+            Product.name,
+            Product.sku,
+        )
         .order_by(
             func.sum(
                 SaleItem.quantity * SaleItem.unit_price
@@ -97,6 +161,8 @@ def get_product_profitability(db: Session) -> list[dict]:
         profitability.append(
             {
                 "product_id": row.product_id,
+                "product_name": row.product_name,
+                "sku": row.sku,
                 "quantity_sold": quantity_sold,
                 "revenue": revenue,
                 "cogs": cogs,
@@ -106,7 +172,6 @@ def get_product_profitability(db: Session) -> list[dict]:
         )
 
     return profitability
-
 
 def get_inventory_intelligence(db: Session) -> dict:
     results = db.execute(
@@ -202,7 +267,12 @@ def get_inventory_intelligence(db: Session) -> dict:
         "products": products,
     }
 
-def get_revenue_trend(db: Session) -> list[dict]:
+
+def get_revenue_trend(
+    db: Session,
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> list[dict]:
     year_expression = func.extract(
         "year",
         Sale.sale_date,
@@ -213,7 +283,7 @@ def get_revenue_trend(db: Session) -> list[dict]:
         Sale.sale_date,
     )
 
-    results = db.execute(
+    trend_query = (
         select(
             year_expression.label("year"),
             month_expression.label("month"),
@@ -239,6 +309,16 @@ def get_revenue_trend(db: Session) -> list[dict]:
         .where(
             Sale.status == "submitted",
         )
+    )
+
+    trend_query = apply_sale_date_filter(
+        trend_query,
+        start_date,
+        end_date,
+    )
+
+    trend_query = (
+        trend_query
         .group_by(
             year_expression,
             month_expression,
@@ -247,7 +327,9 @@ def get_revenue_trend(db: Session) -> list[dict]:
             year_expression,
             month_expression,
         )
-    ).all()
+    )
+
+    results = db.execute(trend_query).all()
 
     trend = []
 
@@ -280,3 +362,4 @@ def get_revenue_trend(db: Session) -> list[dict]:
         )
 
     return trend
+

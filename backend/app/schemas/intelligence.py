@@ -12,6 +12,8 @@ class ProfitSummaryResponse(BaseModel):
 
 class ProductProfitabilityResponse(BaseModel):
     product_id: int
+    product_name: str
+    sku: str
     quantity_sold: Decimal
     revenue: Decimal
     cogs: Decimal

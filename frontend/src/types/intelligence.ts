@@ -7,6 +7,8 @@ export interface ProfitSummary {
 
 export interface ProductProfitability {
   product_id: number;
+  product_name: string;
+  sku: string;
   quantity_sold: string;
   revenue: string;
   cogs: string;

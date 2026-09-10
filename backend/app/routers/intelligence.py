@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -28,8 +30,14 @@ router = APIRouter(
 )
 def profit_summary(
     db: Session = Depends(get_db),
+    start_date: date | None = None,
+    end_date: date | None = None,
 ):
-    return get_profit_summary(db)
+    return get_profit_summary(
+        db,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
 
 @router.get(
@@ -58,5 +66,11 @@ def inventory_intelligence(
 )
 def revenue_trend(
     db: Session = Depends(get_db),
+    start_date: date | None = None,
+    end_date: date | None = None,
 ):
-    return get_revenue_trend(db)
+    return get_revenue_trend(
+        db,
+        start_date=start_date,
+        end_date=end_date,
+    )

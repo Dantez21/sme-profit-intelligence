@@ -10,12 +10,15 @@ import DashboardError from "../components/dashboard/DashboardError";
 import DashboardLoading from "../components/dashboard/DashboardLoading";
 import RevenueProfitChart from "../components/dashboard/RevenueProfitChart";
 import StatCard from "../components/dashboard/StatCard";
+import TopProductsTable from "../components/dashboard/TopProductsTable";
 
 import {
   getInventoryIntelligence,
+  getProductProfitability,
   getProfitSummary,
   getRevenueTrend,
 } from "../services/intelligence";
+
 import {
   formatCurrency,
   formatPercentage,
@@ -47,22 +50,29 @@ function DashboardPage() {
     queryFn: getRevenueTrend,
   });
 
+  const productProfitabilityQuery = useQuery({
+    queryKey: ["intelligence", "product-profitability"],
+    queryFn: getProductProfitability,
+  });
+
   const isLoading =
     profitQuery.isLoading ||
     inventoryQuery.isLoading ||
-    trendQuery.isLoading;
+    trendQuery.isLoading ||
+    productProfitabilityQuery.isLoading;
 
   const hasError =
     profitQuery.isError ||
     inventoryQuery.isError ||
-    trendQuery.isError;
+    trendQuery.isError ||
+    productProfitabilityQuery.isError;
 
   const retry = () => {
     void profitQuery.refetch();
     void inventoryQuery.refetch();
     void trendQuery.refetch();
+    void productProfitabilityQuery.refetch();
   };
-
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -264,6 +274,22 @@ function DashboardPage() {
 
                 </div>
 
+              </section>
+
+              <section className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-200 px-5 py-4">
+                  <h2 className="font-semibold text-slate-900">
+                    Top Performing Products
+                  </h2>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    Products ranked by revenue from submitted sales.
+                  </p>
+                </div>
+
+                <TopProductsTable
+                  products={productProfitabilityQuery.data ?? []}
+                />
               </section>
 
 

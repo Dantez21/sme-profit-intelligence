@@ -4,9 +4,13 @@ import {
   Route,
   Routes,
 } from "react-router";
+
 import AppShell from "./components/layout/AppShell";
 import DashboardPage from "./pages/DashboardPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import ProductsPage from "./pages/ProductsPage";
+import CreateProductPage from "./pages/CreateProductPage";
+import CategoriesPage from "./pages/CategoriesPage";
 
 function App() {
   return (
@@ -54,23 +58,18 @@ function App() {
           />
 
           <Route
+            path="/products/new"
+            element={<CreateProductPage />}
+          />
+
+          <Route
             path="/products"
-            element={
-              <PlaceholderPage
-                title="Products"
-                description="Manage products, pricing, categories, and reorder levels."
-              />
-            }
+            element={<ProductsPage />}
           />
 
           <Route
             path="/categories"
-            element={
-              <PlaceholderPage
-                title="Categories"
-                description="Manage product categories."
-              />
-            }
+            element={<CategoriesPage />}
           />
 
           <Route
